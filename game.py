@@ -29,8 +29,6 @@ IMG_DIR = path.join(path.dirname(__file__), 'textures')
 
 # Load the texture
 
-def mainMenu():
-	global screen
 
 class Game:
 	def __init__(self):
@@ -58,14 +56,13 @@ class Game:
 	
 	def run(self):
 		self.playerPawn.input()
+		self.levelGen.update()
 		self.playerPawn.update()
-		self.levelGen.updateWorldMap()
 		self.draw()
 		
 	def draw(self):
 		self.camera.scroll()
 		pygame.display.update()
-		self.levelGen.update()
 		clock.tick(FPS)
 
 

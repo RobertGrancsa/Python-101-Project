@@ -12,6 +12,7 @@ class Player:
 		self.game = game
 		self.playerSpeed = vec(8, 8)
 		self.playerMovement = vec(0, 0)
+		self.directions = vec(0, 0)
 
 		self.front = self.getTexture(PLAYER_FRONT)
 		self.back = self.getTexture(PLAYER_BACK)
@@ -23,43 +24,44 @@ class Player:
 		return self.TEXTURE_FILE.subsurface(position[0] * SIZE, position[1] * SIZE, SIZE, SIZE)
 
 	def drawPlayer(self):
-		if self.playerMovement.y > 0:
+		if self.playerMovement.y < 0:
 			self.game.screen.blit(self.back, (WIDTH // 2, HEIGHT // 2))
 		elif self.playerMovement.y == 0:
-			self.game.screen.blit(self.back, (WIDTH // 2, HEIGHT // 2))
+			self.game.screen.blit(self.front, (WIDTH // 2, HEIGHT // 2))
 		else:
 			self.game.screen.blit(self.front, (WIDTH // 2, HEIGHT // 2))
 
 	def update(self):
+		self.move()
 		self.pos.x += self.playerMovement.x
 		self.pos.y += self.playerMovement.y
 		self.drawPlayer()
+		# print(str(self.pos))
 
-	def move(self, direction):
-		self.playerMovement.x = direction.x * self.playerSpeed.x
-		self.playerMovement.y = direction.y * self.playerSpeed.y
+	def move(self):
+		self.playerMovement.x = self.directions.x * self.playerSpeed.x
+		self.playerMovement.y = self.directions.y * self.playerSpeed.y
 		
 	def input(self):
-		directions = vec(0, 0)
 		for event in pygame.event.get():
 			if event.type == KEYUP:
 				if event.key == K_ESCAPE:
 					self.game.setMenuDisplay(False)
 				if event.key == K_w:
-					directions.y = 0
+					self.directions.y = 0
 				if event.key == K_a:
-					directions.x = 0
+					self.directions.x = 0
 				if event.key == K_s:
-					directions.y = 0
+					self.directions.y = 0
 				if event.key == K_d:
-					directions.x = 0
+					self.directions.x = 0
 			if event.type == KEYDOWN:
 				if event.key == K_w:
-					directions.y += -1
+					self.directions.y += -1
 				if event.key == K_a:
-					directions.x += -1
+					self.directions.x += -1
 				if event.key == K_s:
-					directions.y += 1
+					self.directions.y += 1
 				if event.key == K_d:
-					directions.x += 1
-			self.move(directions)
+					self.directions.x += 1
+			

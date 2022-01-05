@@ -8,7 +8,7 @@ HEIGHT = 1080
 FPS = 60
 
 # Player vision
-VIEW_DISTANCE = 6
+VIEW_DISTANCE = 4
 CHUNK_SIZE = (16, 16)
 
 # Texture location
