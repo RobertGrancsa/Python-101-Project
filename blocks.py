@@ -1,14 +1,20 @@
 #! /usr/bin/env python3
 
+import threading
+from types import NoneType
+
 import pygame
 import noise
 import numpy as np
+import random as rand
 from pygame.locals import *
 from os import path
 from constants import *
 vec = pygame.math.Vector2
 
 IMG_DIR = path.join(path.dirname(__file__), 'textures')
+
+rand.seed(0)
 
 shape = (1024, 1024)
 scale = 100.0
@@ -29,10 +35,11 @@ for i in range(shape[0]):
                                     base=0)
 
 class Block:
-	def __init__(self, position, texture, canvas):
+	def __init__(self, position, texture, canvas, game):
 		self.position = position
 		self.texture = texture
 		self.canvas = canvas
+		self.game = game
 
 	def getPosition(self):
 		return self.position
@@ -40,11 +47,46 @@ class Block:
 	def draw(self):
 		self.canvas.blit(self.texture, (self.position.x * SIZE, self.position.y * SIZE))
 
+class Tree(Block):
+	def __init__(self, position, texture, canvas, game):
+		super().__init__(position, texture, canvas, game)
+
+	def collision(self):
+		pass
+
+	def draw(self):
+		return super().draw()
+
+class Water(Block):
+	def __init__(self, position, texture, canvas, game):
+		super().__init__(position, texture, canvas, game)
+		self.currentTime = 0
+		self.animationTime = 1/3
+		self.index = 0
+
+	def collision(self):
+		pass
+
+	def draw(self):
+		self.canvas.blit(self.texture, (self.position.x * SIZE, self.position.y * SIZE))
+
+	def changeTexture(self, deltaT):
+		self.currentTime += deltaT
+		if self.currentTime >= self.animationTime:
+			self.currentTime = 0
+			self.index = (self.index + 1) % len(self.texture)
+		return self.texture[self.index]
+
+	def update(self, deltaT):
+		self.currentTexture = self.changeTexture()
+		self.canvas.blit(self.currentTexture, (self.position.x * SIZE, self.position.y * SIZE))
+
 class Chunk:
-	def __init__(self, chunkValues, worldTexture, position):
+	def __init__(self, chunkValues, worldTexture, position, game):
 		self.chunkValues = chunkValues
 		self.worldTexture = worldTexture
 		self.position = position
+		self.game = game
 
 		self.blockList = []
 		self.makeCanvas()
@@ -52,82 +94,174 @@ class Chunk:
 	def getTexture(self, position):
 		return self.worldTexture.subsurface(position[0] * SIZE, position[1] * SIZE, SIZE, SIZE)
 
+	def getAnim(self, position):
+		frames = []
+		for x in range(2):
+			frames.append(self.worldTexture.subsurface(x * SIZE, 2 * SIZE, SIZE, SIZE))
+		return frames
+
 	def makeCanvas(self):
 		self.canvas = pygame.Surface((CHUNK_SIZE[0] * SIZE,CHUNK_SIZE[1] * SIZE))
 
 		for i in range(CHUNK_SIZE[0]):
 			for j in range(CHUNK_SIZE[1]):
 				if self.chunkValues[i][j] < -0.05:
-					self.blockList.append(Block(vec(i, j), self.getTexture(WATER), self.canvas))
+					self.blockList.append(Water(vec(i, j), self.getTexture(WATER), self.canvas, self.game))
 				elif self.chunkValues[i][j] < 0:
-					self.blockList.append(Block(vec(i, j), self.getTexture(SAND), self.canvas))
+					self.blockList.append(Block(vec(i, j), self.getTexture(SAND), self.canvas, self.game))
 				elif self.chunkValues[i][j] < 1.0:
-					self.blockList.append(Block(vec(i, j), self.getTexture(GRASS), self.canvas))
+					self.blockList.append(Block(vec(i, j), self.getTexture(GRASS), self.canvas, self.game))
+					treeChance = rand.random()
+					if treeChance > 0.8:
+						self.blockList.append(Tree(vec(i, j), self.getTexture(TREE), self.canvas, self.game))
+
 
 	def makeChunk(self):
+		first = 0
 		for blocks in self.blockList:
-			blocks.draw()
+			if first == 0:
+				first = 1
+			else:
+				blocks.draw()
 
 		font = pygame.font.Font('freesansbold.ttf', 32)
 		text = font.render(str(self.position), True, (255, 0, 0))
 		self.canvas.blit(text, (0, 0))
 		return self.canvas
 
+	def updateChunk(self):
+		for blocks in self.blockList:
+			if blocks.__class__.__name__ == "Water":
+				blocks.update()
+
 class LevelGen:
 	def __init__(self, game):
-		self.TEXTURE_FILE = pygame.image.load(path.join(IMG_DIR, 'textures.png')).convert()
+		self.TEXTURE_FILE = pygame.image.load(path.join(IMG_DIR, 'textures.png')).convert_alpha()
 		self.game = game
 		self.canvas = pygame.Surface((WIDTH,HEIGHT))
 		self.chunks = pygame.Surface((CHUNK_SIZE[0] * SIZE * VIEW_DISTANCE * 2, CHUNK_SIZE[1] * SIZE * VIEW_DISTANCE * 2))
 
+		self.lastLocation = vec(0, 0)
 		self.chunkList = []
 		self.blockList = []
 		self.createWorldMap()
-		self.updateChunk()
 
-		self.lastChunk = self.getChunk(self.game.getCameraOffset())
+		self.lastChunk = self.getChunkLocation(self.game.getCameraOffset())
 
 	def createWorldMap(self):
 		noiseMapHalf = 1024 // 2
-		currentChunk = self.getChunk(self.game.getCameraOffset())
+		currentChunk = self.getChunkLocation(self.game.getCameraOffset())
 		self.chunkList.clear()
 		for i in range(VIEW_DISTANCE * 2):
 			rows = []
 			for j in range(VIEW_DISTANCE * 2):
-				rows.append(Chunk(world[(noiseMapHalf + ((i-4 + int(currentChunk.x)) * CHUNK_SIZE[0])):(noiseMapHalf + ((i-3 + int(currentChunk.x)) * CHUNK_SIZE[0])),
-										(noiseMapHalf + ((j-4 + int(currentChunk.y)) * CHUNK_SIZE[0])):(noiseMapHalf + ((j-3 + int(currentChunk.y)) * CHUNK_SIZE[0]))], 
-										self.TEXTURE_FILE, vec(i-4 + int(currentChunk.x), j-4 + int(currentChunk.y))))
+				rows.append(Chunk(world[(noiseMapHalf + ((i-VIEW_DISTANCE + int(currentChunk.x)) * CHUNK_SIZE[0])):(noiseMapHalf + ((i-VIEW_DISTANCE+1 + int(currentChunk.x)) * CHUNK_SIZE[0])),
+										(noiseMapHalf + ((j-VIEW_DISTANCE + int(currentChunk.y)) * CHUNK_SIZE[0])):(noiseMapHalf + ((j-VIEW_DISTANCE+1 + int(currentChunk.y)) * CHUNK_SIZE[0]))], 
+										self.TEXTURE_FILE, vec(i-4 + int(currentChunk.x), j-4 + int(currentChunk.y)), self.game))
 			
 			self.chunkList.append(rows[:])
 			rows.clear()
+		
+		self.updateChunk()
+	def updateWorldMap(self, diff):		# Problems se misca in intr-un chunk care nu e vecin cu chunk-ul trecut
+		currentChunk = self.getChunkLocation(self.game.getCameraOffset())
+		noiseMapHalf = 1024 // 2
+		newChunkList = []
 
-	def getChunk(self, worldLocation):
+		# ---------------------- Change y ---------------
+		i = -4
+		if diff.y == -1:
+			for rows in self.chunkList:
+				newRows = []
+				newRows.append(Chunk(world[(noiseMapHalf + ((i + int(currentChunk.x)) * CHUNK_SIZE[0])):(noiseMapHalf + ((i + 1 + int(currentChunk.x)) * CHUNK_SIZE[0])),
+										   (noiseMapHalf + ((-VIEW_DISTANCE+ int(currentChunk.y)) * CHUNK_SIZE[0])):(noiseMapHalf + ((-VIEW_DISTANCE + 1 + int(currentChunk.y)) * CHUNK_SIZE[0]))], 
+										   self.TEXTURE_FILE, vec(i + int(currentChunk.x), -VIEW_DISTANCE + int(currentChunk.y)), self.game))
+				newRows.extend(rows[0:-1])
+				newChunkList.append(newRows)
+
+				i += 1
+		i = -4
+		if diff.y == 1:
+			for rows in self.chunkList:
+				newRows = []
+				newRows.extend(rows[1:])
+				newRows.append(Chunk(world[(noiseMapHalf + ((i + int(currentChunk.x)) * CHUNK_SIZE[0])):(noiseMapHalf + ((i + 1 + int(currentChunk.x)) * CHUNK_SIZE[0])),
+										   (noiseMapHalf + ((VIEW_DISTANCE - 1 + int(currentChunk.y)) * CHUNK_SIZE[0])):(noiseMapHalf + ((VIEW_DISTANCE + int(currentChunk.y)) * CHUNK_SIZE[0]))], 
+										   self.TEXTURE_FILE, vec(i + int(currentChunk.x), VIEW_DISTANCE - 1 + int(currentChunk.y)), self.game))
+				newChunkList.append(newRows)
+
+				i += 1
+
+		# ---------------------- Change x ---------------
+		if diff.x == -1:
+			newRows = []
+			for j in range(VIEW_DISTANCE * 2):
+				newRows.append(Chunk(world[(noiseMapHalf + ((-VIEW_DISTANCE + int(currentChunk.x)) * CHUNK_SIZE[0])):(noiseMapHalf + ((-VIEW_DISTANCE + 1 + int(currentChunk.x)) * CHUNK_SIZE[0])),
+										   (noiseMapHalf + ((j-VIEW_DISTANCE + int(currentChunk.y)) * CHUNK_SIZE[0])):(noiseMapHalf + ((j-VIEW_DISTANCE+1 + int(currentChunk.y)) * CHUNK_SIZE[0]))], 
+										   self.TEXTURE_FILE, vec(-VIEW_DISTANCE + int(currentChunk.x), j - VIEW_DISTANCE + int(currentChunk.y)), self.game))
+			newChunkList.append(newRows)
+			newChunkList.extend(self.chunkList[0:-1])
+				
+		i = -4
+		if diff.x == 1:
+			newRows = []
+			newChunkList.extend(self.chunkList[1:])
+			for j in range(VIEW_DISTANCE * 2):
+				newRows.append(Chunk(world[(noiseMapHalf + ((VIEW_DISTANCE - 1 + int(currentChunk.x)) * CHUNK_SIZE[0])):(noiseMapHalf + ((VIEW_DISTANCE + int(currentChunk.x)) * CHUNK_SIZE[0])),
+										   (noiseMapHalf + ((j-VIEW_DISTANCE + int(currentChunk.y)) * CHUNK_SIZE[0])):(noiseMapHalf + ((j-VIEW_DISTANCE+1 + int(currentChunk.y)) * CHUNK_SIZE[0]))], 
+										   self.TEXTURE_FILE, vec(VIEW_DISTANCE - 1 + int(currentChunk.x), j - VIEW_DISTANCE + int(currentChunk.y)), self.game))
+			newChunkList.append(newRows)
+		self.chunkList = newChunkList[:]
+		self.updateChunk()
+
+	def getChunkLocation(self, worldLocation):
 		chunkPosition = vec(0, 0)
 		chunkPosition.x = worldLocation.x // SIZE // CHUNK_SIZE[0]
 		chunkPosition.y = worldLocation.y // SIZE // CHUNK_SIZE[1]
 
 		return chunkPosition
 
+	def showPos(self):
+		location = self.game.getCameraOffset() // SIZE
+		chunk = self.getChunkLocation(location)
+		return (location, chunk)
+
+
+
 	def updateChunk(self):
+		chunksTmp = pygame.Surface((CHUNK_SIZE[0] * SIZE * VIEW_DISTANCE * 2, CHUNK_SIZE[1] * SIZE * VIEW_DISTANCE * 2))
 		for i in range(VIEW_DISTANCE * 2):
 			for j in range(VIEW_DISTANCE * 2):
-				self.chunks.blit(self.chunkList[i][j].makeChunk(), ((i) * CHUNK_SIZE[0] * SIZE, (j) * CHUNK_SIZE[1] * SIZE))
+				chunksTmp.blit(self.chunkList[i][j].makeChunk(), (i * CHUNK_SIZE[0] * SIZE, j * CHUNK_SIZE[1] * SIZE))
+		self.chunks = chunksTmp
+		self.lastLocation = self.getChunkLocation(self.game.getCameraOffset())
 
 	def changedChunk(self):
-		if self.getChunk(self.game.getCameraOffset()) != self.lastChunk:
-			self.createWorldMap()
-			self.updateChunk()
-			print("Updated chunks" + str(self.getChunk(self.game.getCameraOffset())))
+		currentChunk = self.getChunkLocation(self.game.getCameraOffset())
 		
-		self.lastChunk = self.getChunk(self.game.getCameraOffset())
+		if currentChunk != self.lastChunk:
+			self.lastLocation = self.lastChunk
+			difference = currentChunk - self.lastChunk
+			
+			loadChunks_thread = threading.Thread(target=self.updateWorldMap, name="Chunks", args=(difference,))
+			loadChunks_thread.start()
+	
+			print("Updated chunks" + str(self.getChunkLocation(self.game.getCameraOffset())))
+
+		self.lastChunk = self.getChunkLocation(self.game.getCameraOffset())
 
 
 	def update(self):
-		currentChunk = self.getChunk(self.game.getCameraOffset())
+		currentChunk = self.getChunkLocation(self.game.getCameraOffset())
 		offset = self.game.getCameraOffset()
 
+		print(str(currentChunk) + " " + str(offset))
+
 		self.changedChunk()
-		
-		self.game.screen.blit(self.chunks, (SIZE * CHUNK_SIZE[0] *currentChunk.x + (-1 * (SIZE * CHUNK_SIZE[0] * VIEW_DISTANCE // 2)) - offset.x,
-											SIZE * CHUNK_SIZE[0] *currentChunk.y + (-1 * (SIZE * CHUNK_SIZE[0] * VIEW_DISTANCE // 2))  - offset.y))
+
+		# Very important - the 0, 0 coordinates are counted from here
+		self.origin = vec(SIZE * CHUNK_SIZE[0] * (self.lastLocation.x) + (-1 * (SIZE * CHUNK_SIZE[0] * VIEW_DISTANCE // 2)) - offset.x - 64, 
+					 SIZE * CHUNK_SIZE[0] * (self.lastLocation.y - 1) + (-1 * (SIZE * CHUNK_SIZE[0] * VIEW_DISTANCE // 2))  - offset.y + 32)
+
+		self.game.screen.blit(self.chunks, (self.origin.x, self.origin.y))
 	

@@ -41,7 +41,6 @@ class Game:
 		self.camera.setMethod(self.follow)
 
 		self.levelGen = LevelGen(self)
-		self.levelGen.update()
 		# screen.blit(self.background, (0, 0))
 		
 
@@ -61,7 +60,16 @@ class Game:
 		self.draw()
 		
 	def draw(self):
+		self.deltaT = clock.tick(FPS) / 1000
 		self.camera.scroll()
+
+		display = self.levelGen.showPos()
+		font = pygame.font.Font('freesansbold.ttf', 32)
+		text = font.render("Location: " + str(display[0]), True, (255, 255, 255))
+		text2 = font.render("Chunk: " + str(display[1]), True, (255, 255, 255))
+		screen.blit(text, (30, 30))
+		screen.blit(text2, (30, 60))
+
 		pygame.display.update()
 		clock.tick(FPS)
 
