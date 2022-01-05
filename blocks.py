@@ -7,6 +7,7 @@ import pygame
 import noise
 import numpy as np
 import random as rand
+from pygame.image import tostring
 from pygame.locals import *
 from os import path
 from constants import *
@@ -35,11 +36,15 @@ for i in range(shape[0]):
                                     base=0)
 
 class Block:
-	def __init__(self, position, texture, canvas, game):
+	def __init__(self, position, texture, canvas, game, type):
 		self.position = position
 		self.texture = texture
 		self.canvas = canvas
 		self.game = game
+		self.type = type
+
+	def getType(self):
+		return self.type
 
 	def getPosition(self):
 		return self.position
@@ -48,8 +53,8 @@ class Block:
 		self.canvas.blit(self.texture, (self.position.x * SIZE, self.position.y * SIZE))
 
 class Tree(Block):
-	def __init__(self, position, texture, canvas, game):
-		super().__init__(position, texture, canvas, game)
+	def __init__(self, position, texture, canvas, game, type):
+		super().__init__(position, texture, canvas, game, type)
 
 	def collision(self):
 		pass
@@ -58,8 +63,8 @@ class Tree(Block):
 		return super().draw()
 
 class Water(Block):
-	def __init__(self, position, texture, canvas, game):
-		super().__init__(position, texture, canvas, game)
+	def __init__(self, position, texture, canvas, game, type):
+		super().__init__(position, texture, canvas, game, type)
 		self.currentTime = 0
 		self.animationTime = 1/3
 		self.index = 0
@@ -90,6 +95,15 @@ class Chunk:
 
 		self.blockList = []
 		self.makeCanvas()
+
+	def getLocation(self):
+		return self.position
+
+	def getBlock(self, blockLocation):
+		for block in self.blockList:
+			if block.getPosition() == blockLocation:
+				print(block)
+				return block
 		
 	def getTexture(self, position):
 		return self.worldTexture.subsurface(position[0] * SIZE, position[1] * SIZE, SIZE, SIZE)
@@ -100,29 +114,28 @@ class Chunk:
 			frames.append(self.worldTexture.subsurface(x * SIZE, 2 * SIZE, SIZE, SIZE))
 		return frames
 
+	def addBlock(self, position, type):
+		self.blockList.append(Block(position, self.getTexture(type[0]), self.canvas, self.game, type[1]))
+		
+
 	def makeCanvas(self):
 		self.canvas = pygame.Surface((CHUNK_SIZE[0] * SIZE,CHUNK_SIZE[1] * SIZE))
 
 		for i in range(CHUNK_SIZE[0]):
 			for j in range(CHUNK_SIZE[1]):
 				if self.chunkValues[i][j] < -0.05:
-					self.blockList.append(Water(vec(i, j), self.getTexture(WATER), self.canvas, self.game))
+					self.blockList.append(Water(vec(i, j), self.getTexture(WATER), self.canvas, self.game, "Water"))
 				elif self.chunkValues[i][j] < 0:
-					self.blockList.append(Block(vec(i, j), self.getTexture(SAND), self.canvas, self.game))
+					self.blockList.append(Block(vec(i, j), self.getTexture(SAND), self.canvas, self.game, "Sand"))
 				elif self.chunkValues[i][j] < 1.0:
-					self.blockList.append(Block(vec(i, j), self.getTexture(GRASS), self.canvas, self.game))
+					self.blockList.append(Block(vec(i, j), self.getTexture(GRASS), self.canvas, self.game, "Grass"))
 					treeChance = rand.random()
 					if treeChance > 0.8:
-						self.blockList.append(Tree(vec(i, j), self.getTexture(TREE), self.canvas, self.game))
-
+						self.blockList.append(Tree(vec(i, j), self.getTexture(TREE), self.canvas, self.game, "Tree"))
 
 	def makeChunk(self):
-		first = 0
 		for blocks in self.blockList:
-			if first == 0:
-				first = 1
-			else:
-				blocks.draw()
+			blocks.draw()
 
 		font = pygame.font.Font('freesansbold.ttf', 32)
 		text = font.render(str(self.position), True, (255, 0, 0))
@@ -223,10 +236,49 @@ class LevelGen:
 
 	def showPos(self):
 		location = self.game.getCameraOffset() // SIZE
-		chunk = self.getChunkLocation(location)
+		chunk = self.getChunkLocation(location * SIZE)
 		return (location, chunk)
 
+	def showBlock(self):
+		return self.getBlock().getType()
 
+	def getBlock(self):
+		location = self.game.getCameraOffset() // SIZE
+		relativeLocation = vec(0, 0)
+		relativeLocation.x = location.x % 16
+		relativeLocation.y = location.y % 16
+		
+		currentChunk = self.getChunk(location * SIZE)
+
+		print(relativeLocation)
+		currentBlock = currentChunk.getBlock(relativeLocation)
+		print(currentChunk)
+
+		print("Looking at " + currentBlock.getType())
+
+		return currentBlock
+
+	def getChunk(self, location):
+		chunkOfBlock = self.getChunkLocation(location)
+		for chunks in self.chunkList:
+			for chunk in chunks:
+				if chunk.getLocation() == chunkOfBlock:
+					currentChunk = chunk
+		return currentChunk
+
+	def placeBlock(self, direction):
+		location = self.game.getCameraOffset() // SIZE
+		relativeLocation = vec(0, 0)
+		relativeLocation.x = location.x % 16
+		relativeLocation.y = location.y % 16
+		chunk = self.getChunk(location * SIZE)
+
+		relativeLocation += direction
+
+		chunk.addBlock(relativeLocation, (WOOD, "Wood"))
+		chunk.makeChunk()
+		self.updateChunk()
+		print("Placed block at " + str(relativeLocation))
 
 	def updateChunk(self):
 		chunksTmp = pygame.Surface((CHUNK_SIZE[0] * SIZE * VIEW_DISTANCE * 2, CHUNK_SIZE[1] * SIZE * VIEW_DISTANCE * 2))
@@ -254,8 +306,6 @@ class LevelGen:
 	def update(self):
 		currentChunk = self.getChunkLocation(self.game.getCameraOffset())
 		offset = self.game.getCameraOffset()
-
-		print(str(currentChunk) + " " + str(offset))
 
 		self.changedChunk()
 

@@ -7,7 +7,7 @@ from os import path
 vec = pygame.math.Vector2
 
 from player import Player
-from blocks import LevelGen
+from blocks import LevelGen, Tree
 from camera import *
 from constants import *
 
@@ -41,6 +41,7 @@ class Game:
 		self.camera.setMethod(self.follow)
 
 		self.levelGen = LevelGen(self)
+		self.showStats = True
 		# screen.blit(self.background, (0, 0))
 		
 
@@ -63,12 +64,16 @@ class Game:
 		self.deltaT = clock.tick(FPS) / 1000
 		self.camera.scroll()
 
-		display = self.levelGen.showPos()
-		font = pygame.font.Font('freesansbold.ttf', 32)
-		text = font.render("Location: " + str(display[0]), True, (255, 255, 255))
-		text2 = font.render("Chunk: " + str(display[1]), True, (255, 255, 255))
-		screen.blit(text, (30, 30))
-		screen.blit(text2, (30, 60))
+		if self.showStats:
+			display = self.levelGen.showPos()
+			blockName = self.levelGen.showBlock()
+			font = pygame.font.Font('freesansbold.ttf', 32)
+			text = font.render("Location: " + str(display[0]), True, (255, 255, 255))
+			text2 = font.render("Chunk: " + str(display[1]), True, (255, 255, 255))
+			text3 = font.render("Block on: " + blockName, True, (255, 255, 255))
+			screen.blit(text, (30, 30))
+			screen.blit(text2, (30, 60))
+			screen.blit(text3, (30, 90))
 
 		pygame.display.update()
 		clock.tick(FPS)
