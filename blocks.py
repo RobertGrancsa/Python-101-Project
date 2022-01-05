@@ -310,7 +310,7 @@ class LevelGen:
 		self.changedChunk()
 
 		# Very important - the 0, 0 coordinates are counted from here
-		self.origin = vec(SIZE * CHUNK_SIZE[0] * (self.lastLocation.x) + (-1 * (SIZE * CHUNK_SIZE[0] * VIEW_DISTANCE // 2)) - offset.x - 64, 
+		self.origin = vec(SIZE * CHUNK_SIZE[0] * (self.lastLocation.x) + (-1 * (SIZE * CHUNK_SIZE[0] * VIEW_DISTANCE // 2)) - offset.x - 64,
 					 SIZE * CHUNK_SIZE[0] * (self.lastLocation.y - 1) + (-1 * (SIZE * CHUNK_SIZE[0] * VIEW_DISTANCE // 2))  - offset.y + 32)
 
 		self.game.screen.blit(self.chunks, (self.origin.x, self.origin.y))

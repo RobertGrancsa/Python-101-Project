@@ -88,4 +88,6 @@ class Player:
 					self.game.levelGen.getBlock(self.lookingAt)
 				if event.key == K_f:
 					self.game.levelGen.placeBlock(self.lookingAt)
+				if event.key == K_F3:
+					self.game.showStats()
 			

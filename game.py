@@ -41,7 +41,7 @@ class Game:
 		self.camera.setMethod(self.follow)
 
 		self.levelGen = LevelGen(self)
-		self.showStats = True
+		self.showStatsVar = True
 		# screen.blit(self.background, (0, 0))
 		
 
@@ -53,6 +53,12 @@ class Game:
 
 	def getCameraOffset(self):
 		return self.camera.offset
+
+	def showStats(self):
+		if self.showStatsVar:
+			self.showStatsVar = False
+		else:
+			self.showStatsVar = True
 	
 	def run(self):
 		self.playerPawn.input()
@@ -64,7 +70,7 @@ class Game:
 		self.deltaT = clock.tick(FPS) / 1000
 		self.camera.scroll()
 
-		if self.showStats:
+		if self.showStatsVar:
 			display = self.levelGen.showPos()
 			blockName = self.levelGen.showBlock()
 			font = pygame.font.Font('freesansbold.ttf', 32)
