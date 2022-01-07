@@ -3,8 +3,11 @@
 import pygame
 vec = pygame.math.Vector2
 
+# Worldgen
 SIZE = 32
 BLOCK = (32, 32)
+NOISE_MAP = (1024, 1024)
+
 
 WIDTH = 1920
 HEIGHT = 1080
@@ -21,15 +24,20 @@ WATER = (2, 0)
 WATER_ANIM = ((0, 2), (2, 2))
 SAND = (3, 0)
 WOOD = (4, 0)
+CHEST = (0, 2)
+CACTUS = (1, 2)
+TREE = (2, 2)
+PALM = (3, 2)
+DIAMOND = (0, 3)
 NOTHING = (0, 1)
-TREE = (1, 1)
+
 
 PLAYER_FRONT = (2, 1)
 PLAYER_BACK = (3, 1)
 PLAYER_LEFT = (4, 1)
 PLAYER_RIGHT = (5, 1)
 
-NORTH = vec(0, 1)
+NORTH = vec(0, -1)
 EAST  = vec(1, 0)
-SOUTH = vec(0,-1)
+SOUTH = vec(0,1)
 WEST  = vec(-1,0)

@@ -1,13 +1,12 @@
 #! /usr/bin/env python3
 
 import pygame
-from pygame import draw
 from pygame.locals import *
 from os import path
 vec = pygame.math.Vector2
 
 from player import Player
-from blocks import LevelGen, Tree
+from blocks import LevelGen
 from camera import *
 from constants import *
 
@@ -27,38 +26,46 @@ clock = pygame.time.Clock()
 # Directories for assets
 IMG_DIR = path.join(path.dirname(__file__), 'textures')
 
-# Load the texture
-
-
 class Game:
 	def __init__(self):
-		self.menuDisplay = True
+		self.menuDisplay = False
+		self.gameRunning = True
+		self.showStatsVar = True
 		self.screen = screen
 
-		self.playerPawn = Player(vec(0, 0), self)
 		self.camera = Camera(self)
 		self.follow = Follow(self.camera, self)
 		self.camera.setMethod(self.follow)
+		self.playerPawn = Player(vec(0, 0), self)
 
 		self.levelGen = LevelGen(self)
-		self.showStatsVar = True
-		# screen.blit(self.background, (0, 0))
 		
-
 	def setMenuDisplay(self, value):
 		self.menuDisplay = value
 
 	def getMenuDisplay(self):
 		return self.menuDisplay
 
+	def setGameRunning(self, value):
+		self.gameRunning = value
+
+	def getGameRunning(self):
+		return self.gameRunning
+
 	def getCameraOffset(self):
 		return self.camera.offset
 
-	def showStats(self):
+	def toggleStats(self):
 		if self.showStatsVar:
 			self.showStatsVar = False
 		else:
 			self.showStatsVar = True
+
+	def runMenu(self):
+		# Aici ar trebui sa incepi sa faci meniul
+		# Sa setezi self.menuDisplay = True in constructor ca sa testezi meniul
+		# folosesti functia setMenuDisplay(False) cand vrei sa inchizi meniul si sa intri in joc
+		pass
 	
 	def run(self):
 		self.playerPawn.input()
@@ -89,6 +96,9 @@ def main():
 	game = Game()
 	
 	while game.getMenuDisplay():
+		game.runMenu()
+
+	while game.getGameRunning():
 		game.run()
 
 if __name__ == "__main__":

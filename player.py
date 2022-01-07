@@ -10,10 +10,12 @@ class Player:
 		self.TEXTURE_FILE = pygame.image.load(path.join(IMG_DIR, 'textures.png')).convert_alpha()
 		self.pos = pos
 		self.game = game
+		self.worldLocation = self.game.getCameraOffset() // 32
 		self.playerSpeed = vec(8, 8)
 		self.playerMovement = vec(0, 0)
 		self.directions = vec(0, 0)
 		self.lookingAt = SOUTH
+		self.hitbox = (self.worldLocation.x + 20, self.worldLocation.y, 48, 48)
 
 		self.front = self.getTexture(PLAYER_FRONT)
 		self.back = self.getTexture(PLAYER_BACK)
@@ -62,7 +64,7 @@ class Player:
 		for event in pygame.event.get():
 			if event.type == KEYUP:
 				if event.key == K_ESCAPE:
-					self.game.setMenuDisplay(False)
+					self.game.setGameRunning(False)
 				if event.key == K_w:
 					self.directions.y = 0
 					self.lookingAt = NORTH
@@ -88,6 +90,8 @@ class Player:
 					self.game.levelGen.getBlock(self.lookingAt)
 				if event.key == K_f:
 					self.game.levelGen.placeBlock(self.lookingAt)
+				if event.key == K_e:
+					self.game.levelGen.interactBlock(self.lookingAt)
 				if event.key == K_F3:
-					self.game.showStats()
+					self.game.toggleStats()
 			
