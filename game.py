@@ -10,6 +10,7 @@ from player import Player
 from blocks import LevelGen
 from camera import *
 from constants import *
+from menu import Menu
 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -30,10 +31,11 @@ IMG_DIR = path.join(path.dirname(__file__), 'textures')
 
 class Game:
 	def __init__(self):
-		self.menuDisplay = False
+		self.menuDisplay = True
 		self.gameRunning = True
 		self.showStatsVar = True
 		self.screen = window
+		self.menu = Menu(self)
 
 		self.camera = Camera(self)
 		self.follow = Follow(self.camera, self)
@@ -68,6 +70,9 @@ class Game:
 		# Aici ar trebui sa incepi sa faci meniul
 		# Sa setezi self.menuDisplay = True in constructor ca sa testezi meniul
 		# folosesti functia setMenuDisplay(False) cand vrei sa inchizi meniul si sa intri in joc
+		screen.blit(self.menu.update(), (0, 0, 1920, 1080))
+		pygame.display.update()
+		clock.tick(FPS)
 		pass
 	
 	def run(self):
