@@ -11,7 +11,7 @@ class Player:
 		self.pos = pos
 		self.game = game
 		self.worldLocation = self.game.getCameraOffset() // 32
-		self.playerSpeed = vec(8, 8)
+		self.playerSpeed = vec(4, 4)
 		self.playerMovement = vec(0, 0)
 		self.directions = vec(0, 0)
 		self.lookingAt = SOUTH
@@ -47,7 +47,6 @@ class Player:
 			if self.lookingAt == EAST:
 				self.game.screen.blit(self.right, (WIDTH // 2, HEIGHT // 2))
 
-		
 
 	def update(self):
 		self.move()

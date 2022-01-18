@@ -9,12 +9,12 @@ BLOCK = (32, 32)
 NOISE_MAP = (1024, 1024)
 
 
-WIDTH = 1920
-HEIGHT = 1080
+WIDTH = 512
+HEIGHT = 288
 FPS = 60
 
 # Player vision
-VIEW_DISTANCE = 4
+VIEW_DISTANCE = 2
 CHUNK_SIZE = (16, 16)
 
 # Texture location
@@ -28,9 +28,11 @@ CHEST = (0, 2)
 CACTUS = (1, 2)
 TREE = (2, 2)
 PALM = (3, 2)
-DIAMOND = (0, 3)
-NOTHING = (0, 1)
 
+DIAMOND = (0, 3)
+RUBY = (1, 3)
+EMERALD = (2, 3)
+NOTHING = (0, 1)
 
 PLAYER_FRONT = (2, 1)
 PLAYER_BACK = (3, 1)
@@ -41,3 +43,16 @@ NORTH = vec(0, -1)
 EAST  = vec(1, 0)
 SOUTH = vec(0,1)
 WEST  = vec(-1,0)
+
+# Inventory
+INVENTORY_SIZE = INVENTORY_WIDTH, INVENTORY_HEIGHT = (
+    600,
+    600,
+)
+
+INVENTORY_COORDS = INVENTORY_X, INVENTORY_Y = (
+    WIDTH // 2 - INVENTORY_WIDTH // 2,
+    HEIGHT // 2 - INVENTORY_HEIGHT // 2,
+)
+
+SELECTION_BOX_THICKNESS = 20

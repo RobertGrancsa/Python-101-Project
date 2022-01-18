@@ -3,6 +3,7 @@
 import pygame
 from pygame.locals import *
 from os import path
+from inventory import Inventory
 vec = pygame.math.Vector2
 
 from player import Player
@@ -20,7 +21,8 @@ YELLOW = (255, 255, 0)
 # Start pygame and initialize windows
 pygame.init()
 pygame.display.set_caption('Untitled Game')
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
+screen = pygame.display.set_mode((1920, 1080))
+window = pygame.Surface((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
 
 # Directories for assets
@@ -31,12 +33,13 @@ class Game:
 		self.menuDisplay = False
 		self.gameRunning = True
 		self.showStatsVar = True
-		self.screen = screen
+		self.screen = window
 
 		self.camera = Camera(self)
 		self.follow = Follow(self.camera, self)
 		self.camera.setMethod(self.follow)
 		self.playerPawn = Player(vec(0, 0), self)
+		self.inventory = Inventory()
 
 		self.levelGen = LevelGen(self)
 		
@@ -71,11 +74,15 @@ class Game:
 		self.playerPawn.input()
 		self.levelGen.update()
 		self.playerPawn.update()
+		self.inventory.update()
 		self.draw()
 		
 	def draw(self):
 		self.deltaT = clock.tick(FPS) / 1000
 		self.camera.scroll()
+
+		frame = pygame.transform.scale(self.screen, (1920, 1080))
+		screen.blit(frame, frame.get_rect())
 
 		if self.showStatsVar:
 			display = self.levelGen.showPos()
@@ -87,6 +94,8 @@ class Game:
 			screen.blit(text, (30, 30))
 			screen.blit(text2, (30, 60))
 			screen.blit(text3, (30, 90))
+
+		# self.inventory.draw(screen)
 
 		pygame.display.update()
 		clock.tick(FPS)
