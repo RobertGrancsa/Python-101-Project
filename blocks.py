@@ -368,7 +368,6 @@ class LevelGen:
 			newChunkList.append(newRows)
 			newChunkList.extend(self.chunkList[0:-1])
 
-		i = -VIEW_DISTANCE
 		if diff.x == 1:
 			newRows = []
 			newChunkList.extend(self.chunkList[1:])
@@ -432,13 +431,17 @@ class LevelGen:
 		print(self.difference)
 		self.difference.x = int(self.difference.x)
 		self.difference.y = int(self.difference.y)
-		print(type(self.difference.x))
 
 		chunkOffset = vec(self.currentChunk.x * SIZE * CHUNK_SIZE[0], self.currentChunk.y * SIZE * CHUNK_SIZE[1])
 
-		cropped = self.entities.subsurface(chunkOffset.x, chunkOffset.y, CHUNK_SIZE[0] * SIZE * VIEW_DISTANCE * 2 - chunkOffset.x,
+		print('Sizes: {} {} {} {}'.format(chunkOffset.x, chunkOffset.y, CHUNK_SIZE[0] * SIZE * VIEW_DISTANCE * 2 + chunkOffset.x,
+											CHUNK_SIZE[1] * SIZE * VIEW_DISTANCE * 2 - chunkOffset.y))
+		
+		cropped = self.entities.subsurface(max(chunkOffset.x, 0), max(chunkOffset.y, 0), CHUNK_SIZE[0] * SIZE * VIEW_DISTANCE * 2 + chunkOffset.x,
 											CHUNK_SIZE[1] * SIZE * VIEW_DISTANCE * 2 - chunkOffset.y)
-		self.entities = cropped
+
+		# self.entities.fill((0, 0, 0, 0))
+		# self.entities.blit(cropped, (-chunkOffset.x, -chunkOffset.y))
 
 	def updateChunk(self):
 		chunksTmp = pygame.Surface((CHUNK_SIZE[0] * SIZE * VIEW_DISTANCE * 2, CHUNK_SIZE[1] * SIZE * VIEW_DISTANCE * 2))
