@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 
 import threading
-from types import NoneType
+
 
 import pygame
 import noise
@@ -289,7 +289,7 @@ class LevelGen:
 	# The chunk the player is in
 	def getChunk(self, location):
 		chunkOfBlock = self.getChunkLocation(location)
-		chunk = NoneType
+		chunk = 0
 		for chunks in self.chunkList:
 			for chunk in chunks:
 				if chunk.getLocation() == chunkOfBlock:
