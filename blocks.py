@@ -45,6 +45,7 @@ class Interactable(Block):
 		super().__init__(position, texture, canvas, game, type)
 
 	def collision(self):
+		# collide = rect1.colliderect(rect2)
 		pass
 
 	def draw(self):
@@ -58,7 +59,8 @@ class Water(Block):
 		self.index = 0
 
 	def collision(self):
-		Rect.collidedict
+		# Rect.collidedict
+		pass
 
 	def draw(self):
 		self.canvas.blit(self.texture, (self.position.x * SIZE, self.position.y * SIZE))
@@ -93,7 +95,7 @@ class Chunk:
 	def checkAlreadyLoaded(self):
 		with open('worldData/chunk.json', "r") as jsonFile:
 			data = json.load(jsonFile)
-		
+
 		chunk = data.get(str(str(self.position.x) + ", " + str(self.position.y)))
 
 		if bool(chunk):
@@ -149,16 +151,16 @@ class Chunk:
 			posList = block.get("Position")
 			position = vec(posList[0], posList[1])
 			block.update({"Entity":Block(position, self.textureDict.get(str(block.get("Type"))), self.canvas, self.game, block.get("Type"))})
-		
+
 
 	def updateJSON(self):
 		if bool(self.blockDict):
 			newDict = {}
 			data = {}
-	
+
 			with open('worldData/chunk.json', "r") as jsonFile:
 				data = json.load(jsonFile)
-					
+
 			for key in self.blockDict:
 				entry = self.blockDict.get(key).copy()
 				entry.pop("Entity")
@@ -166,7 +168,7 @@ class Chunk:
 
 
 			data.update({str(str(self.position.x) + ", " + str(self.position.y)):newDict})
-			
+
 			with open('worldData/chunk.json', 'w') as filehandle:
 				json.dump(data, filehandle)
 
@@ -216,6 +218,7 @@ class LevelGen:
 		self.entities.fill((0, 0, 0, 0))
 
 		self.lastLocation = vec(0, 0)
+		self.difference = vec(0, 0)
 		self.chunkList = []
 		self.blockList = []
 		self.createWorldMap()
@@ -232,7 +235,7 @@ class LevelGen:
 		octaves = 6
 		persistence = 0.5
 		lacunarity = 2.0
-									
+
 		self.world = np.zeros(shape)
 
 		if path.exists("worldData/world.data"):
@@ -265,6 +268,7 @@ class LevelGen:
 		self.textureDict.update({"Palm":self.getTexture(PALM)})
 		self.textureDict.update({"Cactus":self.getTexture(CACTUS)})
 		self.textureDict.update({"Diamond":self.getTexture(DIAMOND)})
+		self.textureDict.update({"Ruby":self.getTexture(RUBY)})
 
 	# All the getters of this class
 
@@ -277,7 +281,7 @@ class LevelGen:
 		relativeLocation.x = self.location.x % CHUNK_SIZE[0]
 		relativeLocation.y = self.location.y % CHUNK_SIZE[1]
 		return relativeLocation
-	
+
 	# The chunk position at the position the player is at
 	def getChunkLocation(self, worldLocation):
 		chunkPosition = vec(0, 0)
@@ -285,7 +289,7 @@ class LevelGen:
 		chunkPosition.y = worldLocation.y // SIZE // CHUNK_SIZE[1]
 
 		return chunkPosition
-	
+
 	# The chunk the player is in
 	def getChunk(self, location):
 		chunkOfBlock = self.getChunkLocation(location)
@@ -306,7 +310,7 @@ class LevelGen:
 		currentBlock = currentChunk.getBlock(relativeLocation)
 
 		return currentBlock
-	
+
 	# ----------------------------- Worldgen stuff ------------------------------
 
 	def createWorldMap(self):
@@ -317,12 +321,12 @@ class LevelGen:
 			rows = []
 			for j in range(VIEW_DISTANCE * 2):
 				rows.append(Chunk(self.world[(noiseMapHalf + ((i-VIEW_DISTANCE + int(currentChunk.x)) * CHUNK_SIZE[0])):(noiseMapHalf + ((i-VIEW_DISTANCE+1 + int(currentChunk.x)) * CHUNK_SIZE[0])),
-										(noiseMapHalf + ((j-VIEW_DISTANCE + int(currentChunk.y)) * CHUNK_SIZE[0])):(noiseMapHalf + ((j-VIEW_DISTANCE+1 + int(currentChunk.y)) * CHUNK_SIZE[0]))], 
+										(noiseMapHalf + ((j-VIEW_DISTANCE + int(currentChunk.y)) * CHUNK_SIZE[0])):(noiseMapHalf + ((j-VIEW_DISTANCE+1 + int(currentChunk.y)) * CHUNK_SIZE[0]))],
 										self.textureDict, vec(i-VIEW_DISTANCE + int(currentChunk.x), j-VIEW_DISTANCE + int(currentChunk.y)), self.game))
-			
+
 			self.chunkList.append(rows[:])
 			rows.clear()
-		
+
 		self.updateChunk()
 
 	def updateWorldMap(self, diff):		# Problems se misca in intr-un chunk care nu e vecin cu chunk-ul trecut
@@ -331,24 +335,24 @@ class LevelGen:
 		newChunkList = []
 
 		# ---------------------- Change y ---------------
-		i = -4
+		i = -VIEW_DISTANCE
 		if diff.y == -1:
 			for rows in self.chunkList:
 				newRows = []
 				newRows.append(Chunk(self.world[(noiseMapHalf + ((i + int(currentChunk.x)) * CHUNK_SIZE[0])):(noiseMapHalf + ((i + 1 + int(currentChunk.x)) * CHUNK_SIZE[0])),
-										   		(noiseMapHalf + ((-VIEW_DISTANCE+ int(currentChunk.y)) * CHUNK_SIZE[0])):(noiseMapHalf + ((-VIEW_DISTANCE + 1 + int(currentChunk.y)) * CHUNK_SIZE[0]))], 
+										   		(noiseMapHalf + ((-VIEW_DISTANCE+ int(currentChunk.y)) * CHUNK_SIZE[0])):(noiseMapHalf + ((-VIEW_DISTANCE + 1 + int(currentChunk.y)) * CHUNK_SIZE[0]))],
 										   		self.textureDict, vec(i + int(currentChunk.x), -VIEW_DISTANCE + int(currentChunk.y)), self.game))
 				newRows.extend(rows[0:-1])
 				newChunkList.append(newRows)
 
 				i += 1
-		i = -4
+		i = -VIEW_DISTANCE
 		if diff.y == 1:
 			for rows in self.chunkList:
 				newRows = []
 				newRows.extend(rows[1:])
 				newRows.append(Chunk(self.world[(noiseMapHalf + ((i + int(currentChunk.x)) * CHUNK_SIZE[0])):(noiseMapHalf + ((i + 1 + int(currentChunk.x)) * CHUNK_SIZE[0])),
-												(noiseMapHalf + ((VIEW_DISTANCE - 1 + int(currentChunk.y)) * CHUNK_SIZE[0])):(noiseMapHalf + ((VIEW_DISTANCE + int(currentChunk.y)) * CHUNK_SIZE[0]))], 
+												(noiseMapHalf + ((VIEW_DISTANCE - 1 + int(currentChunk.y)) * CHUNK_SIZE[0])):(noiseMapHalf + ((VIEW_DISTANCE + int(currentChunk.y)) * CHUNK_SIZE[0]))],
 												self.textureDict, vec(i + int(currentChunk.x), VIEW_DISTANCE - 1 + int(currentChunk.y)), self.game))
 				newChunkList.append(newRows)
 
@@ -359,22 +363,23 @@ class LevelGen:
 			newRows = []
 			for j in range(VIEW_DISTANCE * 2):
 				newRows.append(Chunk(self.world[(noiseMapHalf + ((-VIEW_DISTANCE + int(currentChunk.x)) * CHUNK_SIZE[0])):(noiseMapHalf + ((-VIEW_DISTANCE + 1 + int(currentChunk.x)) * CHUNK_SIZE[0])),
-												(noiseMapHalf + ((j-VIEW_DISTANCE + int(currentChunk.y)) * CHUNK_SIZE[0])):(noiseMapHalf + ((j-VIEW_DISTANCE+1 + int(currentChunk.y)) * CHUNK_SIZE[0]))], 
+												(noiseMapHalf + ((j-VIEW_DISTANCE + int(currentChunk.y)) * CHUNK_SIZE[0])):(noiseMapHalf + ((j-VIEW_DISTANCE+1 + int(currentChunk.y)) * CHUNK_SIZE[0]))],
 												self.textureDict, vec(-VIEW_DISTANCE + int(currentChunk.x), j - VIEW_DISTANCE + int(currentChunk.y)), self.game))
 			newChunkList.append(newRows)
 			newChunkList.extend(self.chunkList[0:-1])
-				
-		i = -4
+
+		i = -VIEW_DISTANCE
 		if diff.x == 1:
 			newRows = []
 			newChunkList.extend(self.chunkList[1:])
 			for j in range(VIEW_DISTANCE * 2):
 				newRows.append(Chunk(self.world[(noiseMapHalf + ((VIEW_DISTANCE - 1 + int(currentChunk.x)) * CHUNK_SIZE[0])):(noiseMapHalf + ((VIEW_DISTANCE + int(currentChunk.x)) * CHUNK_SIZE[0])),
-												(noiseMapHalf + ((j-VIEW_DISTANCE + int(currentChunk.y)) * CHUNK_SIZE[0])):(noiseMapHalf + ((j-VIEW_DISTANCE+1 + int(currentChunk.y)) * CHUNK_SIZE[0]))], 
+												(noiseMapHalf + ((j-VIEW_DISTANCE + int(currentChunk.y)) * CHUNK_SIZE[0])):(noiseMapHalf + ((j-VIEW_DISTANCE+1 + int(currentChunk.y)) * CHUNK_SIZE[0]))],
 												self.textureDict, vec(VIEW_DISTANCE - 1 + int(currentChunk.x), j - VIEW_DISTANCE + int(currentChunk.y)), self.game))
 			newChunkList.append(newRows)
 		self.chunkList = newChunkList[:]
 		self.updateChunk()
+		self.cropEntityLayer()
 
 	# def multipleChunkLoad(self, difference):
 	# 	if abs(difference.x) == 2:
@@ -417,9 +422,23 @@ class LevelGen:
 		print("Placed block at " + str(relativeLocation))
 
 	def addToWorld(self, chunkPos, relativePos):
-		drop = self.textureDict.get("Diamond")
-		print("Added diamond at "+ str(chunkPos) + str(relativePos))
-		self.entities.blit(drop, (((chunkPos.x + VIEW_DISTANCE) * CHUNK_SIZE[0] + relativePos.x) * SIZE, ((chunkPos.y + VIEW_DISTANCE) * CHUNK_SIZE[1] + relativePos.y) * SIZE))
+		drop = self.textureDict.get("Ruby")
+		print("Added diamond at " + str(chunkPos) + str(relativePos))
+		print(self.difference)
+
+		self.entities.blit(drop, (((VIEW_DISTANCE) * CHUNK_SIZE[0] + relativePos.x) * SIZE, ((VIEW_DISTANCE) * CHUNK_SIZE[1] + relativePos.y) * SIZE))
+
+	def cropEntityLayer(self):
+		print(self.difference)
+		self.difference.x = int(self.difference.x)
+		self.difference.y = int(self.difference.y)
+		print(type(self.difference.x))
+
+		chunkOffset = vec(self.currentChunk.x * SIZE * CHUNK_SIZE[0], self.currentChunk.y * SIZE * CHUNK_SIZE[1])
+
+		cropped = self.entities.subsurface(chunkOffset.x, chunkOffset.y, CHUNK_SIZE[0] * SIZE * VIEW_DISTANCE * 2 - chunkOffset.x,
+											CHUNK_SIZE[1] * SIZE * VIEW_DISTANCE * 2 - chunkOffset.y)
+		self.entities = cropped
 
 	def updateChunk(self):
 		chunksTmp = pygame.Surface((CHUNK_SIZE[0] * SIZE * VIEW_DISTANCE * 2, CHUNK_SIZE[1] * SIZE * VIEW_DISTANCE * 2))
@@ -431,12 +450,13 @@ class LevelGen:
 
 	def changedChunk(self):
 		currentChunk = self.getChunkLocation(self.game.getCameraOffset())
-		
+
 		if currentChunk != self.lastChunk:
-			difference = currentChunk - self.lastChunk
+			self.difference = currentChunk - self.lastChunk
+			print("Difference: " + str(self.difference))
 
 			self.lastLocation = self.lastChunk
-			loadChunks_thread = threading.Thread(target=self.updateWorldMap, name="Chunks", args=(difference,))
+			loadChunks_thread = threading.Thread(target=self.updateWorldMap, name="Chunks", args=(self.difference,))
 			loadChunks_thread.start()
 
 			print("Updated chunks" + str(self.getChunkLocation(self.game.getCameraOffset())))
@@ -445,15 +465,15 @@ class LevelGen:
 
 
 	def update(self):
-		currentChunk = self.getChunkLocation(self.game.getCameraOffset())
+		self.currentChunk = self.getChunkLocation(self.game.getCameraOffset())
 		offset = self.game.getCameraOffset()
 
 		self.changedChunk()
 
 		# Very important - the 0, 0 coordinates are counted from here
-		self.origin = vec(SIZE * CHUNK_SIZE[0] * (self.lastLocation.x) + (-1 * (SIZE * CHUNK_SIZE[0] * VIEW_DISTANCE // 2)) - offset.x - 64,
-					 SIZE * CHUNK_SIZE[0] * (self.lastLocation.y - 1) + (-1 * (SIZE * CHUNK_SIZE[0] * VIEW_DISTANCE // 2))  - offset.y + 32)
+		self.origin = vec(SIZE * CHUNK_SIZE[0] * (self.lastLocation.x) + (-1 * (SIZE * CHUNK_SIZE[0] * VIEW_DISTANCE // 2)) - offset.x - 260,
+					 	  SIZE * CHUNK_SIZE[0] * (self.lastLocation.y - 1) + (-1 * (SIZE * CHUNK_SIZE[0] * VIEW_DISTANCE // 2))  - offset.y + 144)
 
 		self.game.screen.blit(self.chunks, (self.origin.x, self.origin.y))
 		self.game.screen.blit(self.entities, (self.origin.x, self.origin.y))
-	
+
