@@ -14,51 +14,87 @@ class Menu:
 	def __init__(self, game):
 		self.game = game
 		self.click = False
-		self.font = pygame.font.Font('freesansbold.ttf', 32)
+		self.anim = 0
+		self.multipliers = 1
+		self.pos = 0
+		self.up = True
+		self.font = pygame.font.Font('font.ttf', 48)
 		self.canvas = pygame.Surface((1920, 1080))
-	def make_background(self):
-		background = pygame.image.load(path.join(IMG_DIR, 'background.jpg'))
-		self.canvas.blit(background, (0, 0, 1920, 1080))
+
+		self.textures = pygame.image.load(path.join(IMG_DIR, 'buttons.png'))
+		self.background = self.game.levelGen.getBackground()
+
+		self.button = pygame.transform.scale(self.textures.subsurface(0, BUTTON_SIZE[1] * 0, BUTTON_SIZE[0], BUTTON_SIZE[1]), (B_W, B_H))
+		self.button_hover = pygame.transform.scale(self.textures.subsurface(0, BUTTON_SIZE[1] * 1, BUTTON_SIZE[0], BUTTON_SIZE[1]), (B_W, B_H))
+		self.button_pressed = pygame.transform.scale(self.textures.subsurface(0, BUTTON_SIZE[1] * 2, BUTTON_SIZE[0], BUTTON_SIZE[1]), (B_W, B_H))
+
+		self.make_background(0)
+	def make_background(self, perc):
+		self.pos += perc * 32
+		self.canvas.blit(self.game.levelGen.getBackground(), (-self.pos, 0, 1920, 1080))
+
 	def make_button(self):
-		button1 = pygame.image.load(path.join(IMG_DIR, 'button1.png'))
-		button2 = pygame.image.load(path.join(IMG_DIR, 'button1.png'))
-		B_WIDTH = 400
-		B_HEIGHT = 100
-
-		B_W = 600
-		B_H = 400
-
-		button_1 = pygame.Rect(1920 // 2 - B_WIDTH // 2 , 250, B_H, B_W)
-		self.canvas.blit(button1, button_1)
-		text1 = self.font.render("START GAME", True, (255, 255, 255))
-		self.canvas.blit(text1, (1920 // 2 - text1.get_width() // 2, 300))
-
-		button_2 = pygame.Rect(1920 // 2 - B_WIDTH // 2 , 550, B_H, B_W)
-		self.canvas.blit(button2, button_2)
-		text2 = self.font.render("END GAME", True, (255, 255, 255))
-		self.canvas.blit(text2, (1920 // 2 - text2.get_width() // 2, 600))
+		button_1 = pygame.Rect(1920 // 2 - B_W // 2 , 400, B_W, B_H)
+		button_2 = pygame.Rect(1920 // 2 - B_W // 2 , 600, B_W, B_H)
 
 		mx, my = pygame.mouse.get_pos()
 		if button_1.collidepoint((mx, my)):
+			self.canvas.blit(self.button_hover, button_1)
 			if self.click:
+				self.canvas.blit(self.button_pressed, button_1)
 				self.game.setMenuDisplay(False)
+		else:
+			self.canvas.blit(self.button, button_1)
+
 		if button_2.collidepoint((mx, my)):
+			self.canvas.blit(self.button_hover, button_2)
 			if self.click:
-				pygame.quit()
-				sys.exit()
+				self.canvas.blit(self.button_pressed, button_2)
+				self.game.setGameRunning(False)
+				self.game.setMenuDisplay(False)
+		else:
+			self.canvas.blit(self.button, button_2)
+
+		text1 = self.font.render("START GAME", False, (0, 0, 0))
+		self.canvas.blit(text1, (1920 // 2 - text1.get_width() // 2, 400 + B_H // 2 - text1.get_height() // 2))
+		text1 = self.font.render("START GAME", False, (255, 255, 255))
+		self.canvas.blit(text1, (1920 // 2 - text1.get_width() // 2 - 3, 400 + B_H // 2 - text1.get_height() // 2 - 3))
+		text2 = self.font.render("END GAME", False, (0, 0, 0))
+		self.canvas.blit(text2, (1920 // 2 - text2.get_width() // 2, 600 + B_H // 2 - text2.get_height() // 2))
+		text2 = self.font.render("END GAME", False, (255, 255, 255))
+		self.canvas.blit(text2, (1920 // 2 - text2.get_width() // 2 - 3, 600 + B_H // 2 - text2.get_height() // 2 - 3))
 
 		self.click = False
 		for event in pygame.event.get():
 			if event.type == KEYDOWN:
 				if event.key == K_ESCAPE:
-					pygame.quit()
+					self.game.setGameRunning(False)
+					self.game.setMenuDisplay(False)
 			if event.type == MOUSEBUTTONDOWN:
 				if event.button == 1:
 					self.click = True
 
+	def animateTitle(self, perc):
+		perc /= self.multipliers
+		if (self.anim < 1.5) and self.up:
+			self.anim += perc
+		elif self.anim <= 1:
+			self.up = True
+		else:
+			self.anim -= perc
+			self.up = False
+			self.multipliers = 2
+		
+		title = self.font.render(GAME_NAME, False, (255, 255, 255))
+		title = pygame.transform.scale(title, (title.get_width() * 2 * self.anim, title.get_height() * 2 * self.anim))
+		self.canvas.blit(title, (1920 // 2 - title.get_width() // 2, 100))
+		# print(perc)
+
 	def update(self):
-		self.make_background()
+		self.game.levelGen.changedChunk()
+		self.make_background(self.game.deltaT)
 		self.make_button()
+		self.animateTitle(self.game.deltaT)
 		return self.canvas
 
 	

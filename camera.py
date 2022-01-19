@@ -35,3 +35,10 @@ class Follow(CamScroll):
 		self.camera.offset_float.x += (self.game.playerPawn.pos.x - self.camera.offset_float.x + self.camera.CONST.x)
 		self.camera.offset_float.y += (self.game.playerPawn.pos.y - self.camera.offset_float.y + self.camera.CONST.y)
 		self.camera.offset.x, self.camera.offset.y = int(self.camera.offset_float.x), int(self.camera.offset_float.y)
+
+class Auto(CamScroll):
+	def __init__(self,camera, game) -> None:
+		CamScroll.__init__(self,camera, game)
+
+	def scroll(self):
+		self.camera.offset.x += 32

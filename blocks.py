@@ -43,20 +43,17 @@ class Block:
 class Interactable(Block):
 	def __init__(self, position, texture, canvas, game, type):
 		super().__init__(position, texture, canvas, game, type)
+		self.rect = pygame.Rect(self.position.x * SIZE, self.position.y * SIZE, SIZE, SIZE)
 
-	def collision(self):
-		# collide = rect1.colliderect(rect2)
-		pass
+	def getRect(self):
+		return self.rect
 
 	def draw(self):
-		return super().draw()
+		self.canvas.blit(self.texture, self.rect)
 
 class Water(Block):
 	def __init__(self, position, texture, canvas, game, type):
 		super().__init__(position, texture, canvas, game, type)
-		self.currentTime = 0
-		self.animationTime = 1/3
-		self.index = 0
 
 	def collision(self):
 		# Rect.collidedict
@@ -92,6 +89,9 @@ class Chunk:
 	def getLocation(self):
 		return self.position
 
+	def getDict(self):
+		return self.blockDict
+
 	def checkAlreadyLoaded(self):
 		with open('worldData/chunk.json', "r") as jsonFile:
 			data = json.load(jsonFile)
@@ -120,6 +120,13 @@ class Chunk:
 		block.update({"Entity":Block(position, self.textureDict.get(str(entityName)), self.canvas, self.game, entityName)})
 		self.blockDict.update({str(position):block})
 
+	def addInteractable(self, position, entityName):
+		block = {}
+		block.update({"Type":entityName})
+		block.update({"Position":(position.x, position.y)})
+		block.update({"Entity":Interactable(position, self.textureDict.get(str(entityName)), self.canvas, self.game, entityName)})
+		self.blockDict.update({str(position):block})
+
 	def makeCanvas(self):
 		self.canvas = pygame.Surface((CHUNK_SIZE[0] * SIZE,CHUNK_SIZE[1] * SIZE))
 
@@ -132,16 +139,16 @@ class Chunk:
 					self.blockList.append(Block(vec(i, j), self.textureDict.get("Sand"), self.canvas, self.game, "Sand"))
 					if not self.alreadyLoaded:
 						if blockChance > 0.95:
-							self.addBlock(vec(i, j), "Palm")
+							self.addInteractable(vec(i, j), "Palm")
 						elif blockChance > 0.9:
-							self.addBlock(vec(i, j), "Cactus")
+							self.addInteractable(vec(i, j), "Cactus")
 				elif self.chunkValues[i][j] < 1.0:
 					self.blockList.append(Block(vec(i, j), self.textureDict.get("Grass"), self.canvas, self.game, "Grass"))
 					if not self.alreadyLoaded:
-						if blockChance > 0.999:
-							self.addBlock(vec(i, j), "Chest")
+						if blockChance > 0.99:
+							self.addInteractable(vec(i, j), "Chest")
 						elif blockChance > 0.8:
-							self.addBlock(vec(i, j), "Tree")
+							self.addInteractable(vec(i, j), "Tree")
 		if self.alreadyLoaded:
 			self.loadJSON()
 
@@ -219,6 +226,7 @@ class LevelGen:
 
 		self.lastLocation = vec(0, 0)
 		self.difference = vec(0, 0)
+		self.location = vec(0, 0)
 		self.chunkList = []
 		self.blockList = []
 		self.createWorldMap()
@@ -310,6 +318,9 @@ class LevelGen:
 		currentBlock = currentChunk.getBlock(relativeLocation)
 
 		return currentBlock
+
+	def getBackground(self):
+		return self.chunks
 
 	# ----------------------------- Worldgen stuff ------------------------------
 
@@ -466,7 +477,6 @@ class LevelGen:
 
 		self.lastChunk = self.getChunkLocation(self.game.getCameraOffset())
 
-
 	def update(self):
 		self.currentChunk = self.getChunkLocation(self.game.getCameraOffset())
 		offset = self.game.getCameraOffset()
@@ -479,4 +489,16 @@ class LevelGen:
 
 		self.game.screen.blit(self.chunks, (self.origin.x, self.origin.y))
 		self.game.screen.blit(self.entities, (self.origin.x, self.origin.y))
+
+	def collision(self):
+		relativeLocation = vec(0, 0)
+		relativeLocation.x = self.location.x % CHUNK_SIZE[0]
+		relativeLocation.y = self.location.y % CHUNK_SIZE[1]
+
+		chunk = self.getChunk(self.location * SIZE)
+		dict = chunk.getDict()
+		block = dict.get(str(str(self.relativeLocation.x) + ", " + str(self.relativeLocation.y)))
+		if bool(block):
+			print("im on smth")
+
 

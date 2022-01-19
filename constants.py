@@ -3,6 +3,14 @@
 import pygame
 vec = pygame.math.Vector2
 
+GAME_NAME = 'Epic Game'
+
+# Menu
+BUTTON_SIZE = (256, 82)
+B_W = 512
+B_H = 164
+
+
 # Worldgen
 SIZE = 32
 BLOCK = (32, 32)

@@ -21,7 +21,7 @@ YELLOW = (255, 255, 0)
 
 # Start pygame and initialize windows
 pygame.init()
-pygame.display.set_caption('Untitled Game')
+pygame.display.set_caption(GAME_NAME)
 screen = pygame.display.set_mode((1920, 1080))
 window = pygame.Surface((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
@@ -34,18 +34,24 @@ class Game:
 		self.menuDisplay = True
 		self.gameRunning = True
 		self.showStatsVar = True
+
 		self.screen = window
-		self.menu = Menu(self)
 
 		self.camera = Camera(self)
 		self.follow = Follow(self.camera, self)
-		self.camera.setMethod(self.follow)
+		self.auto = Auto(self.camera, self)
+		self.camera.setMethod(self.auto)
+
 		self.playerPawn = Player(vec(0, 0), self)
 		self.inventory = Inventory()
 
 		self.levelGen = LevelGen(self)
+		self.menu = Menu(self)
+		
 		
 	def setMenuDisplay(self, value):
+		if not value:
+			self.camera.setMethod(self.follow)
 		self.menuDisplay = value
 
 	def getMenuDisplay(self):
@@ -70,12 +76,12 @@ class Game:
 		# Aici ar trebui sa incepi sa faci meniul
 		# Sa setezi self.menuDisplay = True in constructor ca sa testezi meniul
 		# folosesti functia setMenuDisplay(False) cand vrei sa inchizi meniul si sa intri in joc
+		self.deltaT = clock.tick(FPS) / 1000
 		screen.blit(self.menu.update(), (0, 0, 1920, 1080))
 		pygame.display.update()
-		clock.tick(FPS)
-		pass
 	
 	def run(self):
+		self.levelGen.collision()
 		self.playerPawn.input()
 		self.levelGen.update()
 		self.playerPawn.update()
@@ -103,7 +109,7 @@ class Game:
 		# self.inventory.draw(screen)
 
 		pygame.display.update()
-		clock.tick(FPS)
+		clock.tick(60)
 
 
 def main():
