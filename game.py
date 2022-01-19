@@ -6,6 +6,10 @@ from os import path
 from inventory import Inventory
 vec = pygame.math.Vector2
 
+# Initializing sound module
+from pygame import mixer
+mixer.init()
+
 from player import Player
 from blocks import LevelGen
 from camera import *
@@ -25,6 +29,10 @@ pygame.display.set_caption('Untitled Game')
 screen = pygame.display.set_mode((1920, 1080))
 window = pygame.Surface((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
+
+# Ambiental soundtrack
+mixer.music.load('audio/ambient.wav')
+mixer.music.play(-1)
 
 # Directories for assets
 IMG_DIR = path.join(path.dirname(__file__), 'textures')
