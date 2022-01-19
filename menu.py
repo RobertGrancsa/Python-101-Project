@@ -1,5 +1,5 @@
 #! /usr/bin/env python3
-
+import sys
 import pygame
 from pygame.locals import *
 from os import path
@@ -9,6 +9,10 @@ from os import mkdir, path
 
 IMG_DIR = path.join(path.dirname(__file__), 'textures')
 DATA_DIR = path.join(path.dirname(__file__), 'worldData')
+
+# Initializing mouse-click sound effect (used at line 49)
+from pygame import mixer
+clickSound = mixer.Sound('audio/click.wav')
 
 class Menu:
 	def __init__(self, game):
@@ -42,6 +46,8 @@ class Menu:
 			self.canvas.blit(self.button_hover, button_1)
 			if self.click:
 				self.canvas.blit(self.button_pressed, button_1)
+				# Sound effect
+				clickSound.play()
 				self.game.setMenuDisplay(False)
 		else:
 			self.canvas.blit(self.button, button_1)
