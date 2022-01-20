@@ -44,7 +44,7 @@ class Game:
 		self.menuDisplay = True
 		self.gameRunning = True
 		self.showStatsVar = True
-		self.timer = 5.0
+		self.timer = 60.0
 
 		self.screen = window
 		self.font = pygame.font.Font('font.ttf', 32)
