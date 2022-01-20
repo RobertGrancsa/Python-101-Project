@@ -44,7 +44,7 @@ class Game:
 		self.menuDisplay = True
 		self.gameRunning = True
 		self.showStatsVar = True
-		self.timer = 60.0
+		self.timer = 5.0
 
 		self.screen = window
 		self.font = pygame.font.Font('font.ttf', 32)
@@ -109,7 +109,6 @@ class Game:
 			self.inventory.update()
 			self.draw()
 		else:
-			screen.b
 			end = self.font.render("GAME OVER", True, (255, 32, 32))
 			end = pygame.transform.scale(end, (end.get_width() * 4, end.get_height() * 4))
 			screen.blit(end, (1920 // 2 - end.get_width() // 2, 1080 // 2 - end.get_height() // 2))
