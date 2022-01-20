@@ -497,8 +497,9 @@ class LevelGen:
 
 		chunk = self.getChunk(self.location * SIZE)
 		dict = chunk.getDict()
-		block = dict.get(str(str(self.relativeLocation.x) + ", " + str(self.relativeLocation.y)))
-		if bool(block):
-			print("im on smth")
+		
+		# block = dict.get(str(str(self.relativeLocation.x) + ", " + str(self.relativeLocation.y)))
+		# if bool(block):
+			# print("im on smth")
 
 

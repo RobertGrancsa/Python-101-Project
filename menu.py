@@ -34,8 +34,16 @@ class Menu:
 
 		self.make_background(0)
 	def make_background(self, perc):
-		self.pos += perc * 32
-		self.canvas.blit(self.game.levelGen.getBackground(), (-self.pos, 0, 1920, 1080))
+		self.pos += perc * 32 * 32
+		background = self.game.levelGen.getBackground()
+		mirror = pygame.transform.flip(background, True, False)
+		if self.pos > mirror.get_width():
+			tmp = mirror
+			mirror = background
+			background = tmp
+			self.pos = 0
+		self.canvas.blit(mirror, (mirror.get_width() - self.pos, 0, 1920, 1080))
+		self.canvas.blit(background, (-self.pos, 0, 1920, 1080))
 
 	def make_button(self):
 		button_1 = pygame.Rect(1920 // 2 - B_W // 2 , 400, B_W, B_H)
