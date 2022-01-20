@@ -51,28 +51,6 @@ class Interactable(Block):
 	def draw(self):
 		self.canvas.blit(self.texture, self.rect)
 
-class Water(Block):
-	def __init__(self, position, texture, canvas, game, type):
-		super().__init__(position, texture, canvas, game, type)
-
-	def collision(self):
-		# Rect.collidedict
-		pass
-
-	def draw(self):
-		self.canvas.blit(self.texture, (self.position.x * SIZE, self.position.y * SIZE))
-
-	def changeTexture(self, deltaT):
-		self.currentTime += deltaT
-		if self.currentTime >= self.animationTime:
-			self.currentTime = 0
-			self.index = (self.index + 1) % len(self.texture)
-		return self.texture[self.index]
-
-	def update(self, deltaT):
-		self.currentTexture = self.changeTexture()
-		self.canvas.blit(self.currentTexture, (self.position.x * SIZE, self.position.y * SIZE))
-
 class Chunk:
 	def __init__(self, chunkValues, textureDict, position, game):
 		self.chunkValues = chunkValues
@@ -134,7 +112,7 @@ class Chunk:
 			for j in range(CHUNK_SIZE[1]):
 				blockChance = rand.random()
 				if self.chunkValues[i][j] < -0.05:
-					self.blockList.append(Water(vec(i, j), self.textureDict.get("Water"), self.canvas, self.game, "Water"))
+					self.blockList.append(Block(vec(i, j), self.textureDict.get("Water"), self.canvas, self.game, "Water"))
 				elif self.chunkValues[i][j] < 0:
 					self.blockList.append(Block(vec(i, j), self.textureDict.get("Sand"), self.canvas, self.game, "Sand"))
 					if not self.alreadyLoaded:
@@ -145,7 +123,7 @@ class Chunk:
 				elif self.chunkValues[i][j] < 1.0:
 					self.blockList.append(Block(vec(i, j), self.textureDict.get("Grass"), self.canvas, self.game, "Grass"))
 					if not self.alreadyLoaded:
-						if blockChance > 0.99:
+						if blockChance > 0.995:
 							self.addInteractable(vec(i, j), "Chest")
 						elif blockChance > 0.8:
 							self.addInteractable(vec(i, j), "Tree")
@@ -194,9 +172,9 @@ class Chunk:
 		# updateJSON_thread.start()
 		self.updateJSON()
 
-		font = pygame.font.Font('freesansbold.ttf', 32)
-		text = font.render(str(self.position), True, (255, 0, 0))
-		self.canvas.blit(text, (0, 0))
+		# font = pygame.font.Font('freesansbold.ttf', 32)
+		# text = font.render(str(self.position), True, (255, 0, 0))
+		# self.canvas.blit(text, (0, 0))
 		return self.canvas
 
 	def updateChunk(self):
@@ -389,7 +367,7 @@ class LevelGen:
 			newChunkList.append(newRows)
 		self.chunkList = newChunkList[:]
 		self.updateChunk()
-		self.cropEntityLayer()
+		# self.cropEntityLayer()
 
 	# def multipleChunkLoad(self, difference):
 	# 	if abs(difference.x) == 2:
@@ -412,16 +390,27 @@ class LevelGen:
 		return self.getBlock().getType()
 
 	def interactBlock(self, direction):
-		relativeLocation = self.getRelativeLocation(self.location)
-		chunk = self.getChunk(self.location * SIZE)
+		relativeLocation = self.getRelativeLocation(self.game.getCameraOffset())
+		chunk = self.getChunk(self.location)
+		name = ''
 
-		relativeLocation += direction
+		# relativeLocation += direction
 
-		# if self.showBlock() == "Chest":
-		self.addToWorld(chunk.getLocation(), relativeLocation)
+		dictionary = chunk.getDict()
+		# print(dictionary)
+		block = dictionary.get(str(relativeLocation))
+		if bool(block):
+			name = block.get("Type")
+		
+		if name == "Chest":
+			number = rand.randrange(5, 15)
+			
+			self.game.incrementTimer(number)
+			print("Incremented")
+		# self.addToWorld(chunk.getLocation(), relativeLocation)
 
 	def placeBlock(self, direction):
-		relativeLocation = self.getRelativeLocation(self.location)
+		relativeLocation = self.getRelativeLocation(self.game.getCameraOffset())
 		chunk = self.getChunk(self.location * SIZE)
 
 		relativeLocation += direction
@@ -478,6 +467,7 @@ class LevelGen:
 		self.lastChunk = self.getChunkLocation(self.game.getCameraOffset())
 
 	def update(self):
+		# self.location = self.game.getCameraOffset()
 		self.currentChunk = self.getChunkLocation(self.game.getCameraOffset())
 		offset = self.game.getCameraOffset()
 

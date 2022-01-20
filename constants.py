@@ -3,7 +3,7 @@
 import pygame
 vec = pygame.math.Vector2
 
-GAME_NAME = 'Epic Game'
+GAME_NAME = 'Chest Finder'
 
 # Menu
 BUTTON_SIZE = (256, 82)

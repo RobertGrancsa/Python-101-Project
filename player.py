@@ -14,18 +14,9 @@ waterSound = mixer.Sound('audio/water.wav')
 # Initializing block placing sound effects (used at F key-binding)
 blockSound = mixer.Sound('audio/place_block.wav')
 
-# Defining playSound function (called at WASD key-bindings)
-def playSounds(self):
-		if self.game.levelGen.showBlock() == "Grass":
-			grassSound.play()
-		elif self.game.levelGen.showBlock() == "Sand":
-			sandSound.play()
-		elif self.game.levelGen.showBlock() == "Water":
-			waterSound.play()
-
 class Player:
 	def __init__(self, pos, game):
-		self.TEXTURE_FILE = pygame.image.load(path.join(IMG_DIR, 'textures.png')).convert_alpha()
+		self.TEXTURE_FILE = pygame.image.load(path.join(IMG_DIR, 'player_character.png')).convert_alpha()
 		self.pos = pos
 		self.game = game
 		self.worldLocation = self.game.getCameraOffset() // 32
@@ -35,10 +26,9 @@ class Player:
 		self.lookingAt = SOUTH
 		self.hitbox = (self.worldLocation.x + 20, self.worldLocation.y, 48, 48)
 
-		self.front = self.getTexture(PLAYER_FRONT)
-		self.back = self.getTexture(PLAYER_BACK)
-		self.left = self.getTexture(PLAYER_LEFT)
-		self.right = self.getTexture(PLAYER_RIGHT)
+		self.left = pygame.transform.scale(self.TEXTURE_FILE, (32, 32))
+		self.right = pygame.transform.scale(pygame.transform.flip(self.TEXTURE_FILE, True, False), (32, 32))
+		self.water = self.left.subsurface((0, 0, 32, 16))
 
 	def getPosition(self):
 		return self.pos
@@ -47,24 +37,34 @@ class Player:
 		return self.TEXTURE_FILE.subsurface(position[0] * SIZE, position[1] * SIZE, SIZE, SIZE)
 
 	def drawPlayer(self):
-		if self.playerMovement.y < 0:
-			self.game.screen.blit(self.back, (WIDTH // 2, HEIGHT // 2))
-		elif self.playerMovement.y > 0:
-			self.game.screen.blit(self.front, (WIDTH // 2, HEIGHT // 2))
-		elif self.playerMovement.x < 0:
-			self.game.screen.blit(self.right, (WIDTH // 2, HEIGHT // 2))
+		block = self.game.levelGen.showBlock()
+		if block == "Water":
+			self.game.screen.blit(self.water, (WIDTH // 2 - self.left.get_width() // 2, HEIGHT // 2 - self.left.get_height() // 2))
+			return
+
+		if self.playerMovement.x < 0:
+			self.game.screen.blit(self.right, (WIDTH // 2 - self.left.get_width() // 2, HEIGHT // 2 - self.left.get_height() // 2))
 		elif self.playerMovement.x > 0:
-			self.game.screen.blit(self.left, (WIDTH // 2, HEIGHT // 2))
+			self.game.screen.blit(self.left, (WIDTH // 2 - self.left.get_width() // 2, HEIGHT // 2 - self.left.get_height() // 2))
 		else:
 			if self.lookingAt == NORTH:
-				self.game.screen.blit(self.back, (WIDTH // 2, HEIGHT // 2))
+				self.game.screen.blit(self.left, (WIDTH // 2 - self.left.get_width() // 2, HEIGHT // 2 - self.left.get_height() // 2))
 			if self.lookingAt == SOUTH:
-				self.game.screen.blit(self.front, (WIDTH // 2, HEIGHT // 2))
+				self.game.screen.blit(self.left, (WIDTH // 2 - self.left.get_width() // 2, HEIGHT // 2 - self.left.get_height() // 2))
 			if self.lookingAt == WEST:
-				self.game.screen.blit(self.left, (WIDTH // 2, HEIGHT // 2))
+				self.game.screen.blit(self.left, (WIDTH // 2 - self.left.get_width() // 2, HEIGHT // 2 - self.left.get_height() // 2))
 			if self.lookingAt == EAST:
-				self.game.screen.blit(self.right, (WIDTH // 2, HEIGHT // 2))
+				self.game.screen.blit(self.right, (WIDTH // 2 - self.left.get_width() // 2, HEIGHT // 2 - self.left.get_height() // 2))
 
+	# Defining playSound function (called at WASD key-bindings)
+	def playSounds(self):
+		block = self.game.levelGen.showBlock()
+		if block == "Grass":
+			grassSound.play()
+		elif block == "Sand":
+			sandSound.play()
+		elif block == "Water":
+			waterSound.play()
 
 	def update(self):
 		self.move()
@@ -98,19 +98,19 @@ class Player:
 				if event.key == K_w:
 					self.directions.y += -1
 					# Sound effect
-					playSounds(self)
+					self.playSounds()
 				if event.key == K_a:
 					self.directions.x += -1
 					# Sound effect
-					playSounds(self)
+					self.playSounds()
 				if event.key == K_s:
 					self.directions.y += 1
 					# Sound effect
-					playSounds(self)
+					self.playSounds()
 				if event.key == K_d:
 					self.directions.x += 1
 					# Sound effect
-					playSounds(self)
+					self.playSounds()
 				if event.key == K_SPACE:
 					self.game.levelGen.getBlock(self.lookingAt)
 				if event.key == K_f:

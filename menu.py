@@ -34,7 +34,7 @@ class Menu:
 
 		self.make_background(0)
 	def make_background(self, perc):
-		self.pos += perc * 32 * 32
+		self.pos += perc * 32
 		background = self.game.levelGen.getBackground()
 		mirror = pygame.transform.flip(background, True, False)
 		if self.pos > mirror.get_width():

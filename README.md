@@ -1,10 +1,5 @@
-# Python-101-Project
+# Chest finder
 
-Fiecare pachet adaugat nou sa il adaugati in `requirements.txt`, sa nu ne incurcam cu ele si sa stim ce sa instalam daca lipseste ceva
+## A Minecraft 2D like game with (in)finite worldgen
 
-O sa folosim python 3.10 toti, ca sa nu avem probleme cu versiuni diferite
-
-```bash
-# To install the needed packages
-python3 -m pip install -r requirements.txt
-```
+A top-down minecraft style game with semi-infinite worldgen using perlin noise and gameplay elements consist of finding chest throughout the game which incrementing your times
